@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, InternalServerErrorException, ConflictException, UnauthorizedException } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm"
 import { User } from "./entities/user.entity"
 import { CreateUserDto } from "./dto/create-user.dto";
+import { LoginUserDto } from "./dto/login-user.dto";
 import * as bcrypt from "bcrypt"
-import * as crypto from 'crypto';  // or const crypto = require('crypto');
-
 
 @Injectable()
 export class UserService {
@@ -43,13 +42,13 @@ export class UserService {
         
         if (existing) {
             if (existing.email === dto.email) {
-                throw new BadRequestException('Email already exists');
+                throw new ConflictException('Email already exists');
             }
             if (existing.userId === dto.userid) {
-                throw new BadRequestException('Name already exists');
+                throw new ConflictException('Name already exists');
             }
         }
-
+        console.log("work?")
         //do password hash...
         const hashed = await bcrypt.hash(dto.password, 10)
 
@@ -63,8 +62,29 @@ export class UserService {
         return this.userRepository.save(user);
     }
 
+    async checkUser(dto: LoginUserDto): Promise<User> {
+        try {
+            const user = await this.userRepository.findOne({where: {userId: dto.userid}});
+            
+            if (!user) {
+                throw new NotFoundException(`User with ID ${dto.userid} not found`);
+            }
+            return user;
+        }
+        catch(err) {
+            // 이미 NotFoundException이면 그대로 전파
+            console.log('work here? for what?')
+            if (err instanceof NotFoundException) {
+                throw new UnauthorizedException('Unauthorized User');
+            }
+            // DB 에러 등 다른 에러는 InternalServerErrorException으로 변환
+            throw new InternalServerErrorException('Failed to fetch user');
+        }
+    }
+
     async convertRoleStringToInt(role:string): Promise<number> {
 
+        //magic number 바꿔 제발
         switch(role) {
             case 'admin':
                 return 1;
