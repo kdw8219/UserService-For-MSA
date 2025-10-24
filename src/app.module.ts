@@ -5,6 +5,9 @@ import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
+import * as crypto from 'crypto';
+(global as any).crypto = crypto;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -14,11 +17,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     TypeOrmModule.forRootAsync({
       useFactory: (configService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: parseInt(configService.get<string>('DB_PORT')),
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_NAME'),
+        host: configService.get('DB_HOST') as string,
+        port: configService.get('DB_PORT') as number,
+        username: configService.get('DB_USER') as string,
+        password: configService.get('DB_PASSWORD') as string,
+        database: configService.get('DB_NAME') as string,
         autoLoadEntities: true,
         synchronize: true,
       }),

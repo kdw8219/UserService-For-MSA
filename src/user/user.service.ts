@@ -4,6 +4,8 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { User } from "./entities/user.entity"
 import { CreateUserDto } from "./dto/create-user.dto";
 import * as bcrypt from "bcrypt"
+import * as crypto from 'crypto';  // or const crypto = require('crypto');
+
 
 @Injectable()
 export class UserService {
