@@ -97,4 +97,22 @@ export class UserService {
         }
     }
 
+    async delete(primaryId: number): Promise<boolean> {
+
+        try {
+            const user = await this.userRepository.delete({
+                id: primaryId
+            });
+        } catch(err) {
+            if( err instanceof NotFoundException) {
+                return true; // 없어서 못지우는 경우는 패스
+            }
+            else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

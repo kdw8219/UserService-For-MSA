@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Patch, Post, Put, Param, Body, Res } from "@nestjs/common";
+import { Controller, Delete, Get, Patch, Post, Put, Param, Body, Req, InternalServerErrorException } from "@nestjs/common";
 import { UpdateDateColumn } from "typeorm";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -25,14 +25,24 @@ export class UserController {
         return safe;
     }
     @Post('login')
-    async getUser(@Body() userDto:LoginUserDto, @Res() res: Response) {
-        //db 레벨에서 not found 리턴할 것.
-        const user = await this.userService.checkUser(userDto);
+    async getUser(@Body() userDto:LoginUserDto) {
+        let createdUser;
+        let tokens : {access: string, refresh:string };
+        try {
+            createdUser = await this.userService.checkUser(userDto);
 
-        //user는 이 시점에 정상으로 조회가 된 것.
+            // 2) 외부 인증 서비스에서 토큰 받기
+            tokens = await this.externalComService.getInitialAuthFromExternal();
+        }
+        catch (err) {
+            if(createdUser) {
+                throw new InternalServerErrorException('Get authentication error. check auth service');
+            }
+
+            throw new InternalServerErrorException('Registration Failed.. check Auth Services');
+        }
         
-
-        return res;
+        return { access_token: tokens.access, refresh_token: tokens.refresh };
     }
 
     @Put()
@@ -40,9 +50,25 @@ export class UserController {
         return "User updated";
     }
 
-    @Delete()
-    deleteUser(): string {
-        return "User deleted";
+    @Delete(':id')
+    async deleteUser(@Param('id') id: string, @Req() req: Request, isInternalReq: boolean = false, refreshToken: string = "") {
+        let res = await this.userService.delete(+id);
+        
+        if(!res) {
+            throw new InternalServerErrorException('Failed to delete user');
+        }
+
+        //auth 삭제 필요, refresh_token을 블랙리스트로
+        if(isInternalReq == true) {
+            let refresh:string = req.headers['cookie']
+            ?.split('; ')
+            .find(row => row.startwithn('refresh_token='))
+            ?.split('=')[1];
+
+            await this.externalComService.refreshTokenToBlacklist(refresh);
+        }
+
+        return { message: 'User deleted successfully' };
     }
 
     @Patch()

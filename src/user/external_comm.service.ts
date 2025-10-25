@@ -27,4 +27,12 @@ export class ExternalApiService {
         }
     } 
   }
+
+  //TODO: delete auth
+  async refreshTokenToBlacklist(refresh_token:string): Promise<true> {
+
+
+
+    return true;
+  }
 }
