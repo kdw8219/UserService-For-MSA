@@ -27,11 +27,9 @@ export class UserController {
     @Post('login')
     async getUser(@Body() userDto:LoginUserDto) {
         let createdUser;
-        let tokens : {access: string, refresh:string };
+        let tokens : {access_token: string, refresh_token:string };
         try {
             createdUser = await this.userService.checkUser(userDto);
-
-            // 2) 외부 인증 서비스에서 토큰 받기
             tokens = await this.externalComService.getInitialAuthFromExternal();
         }
         catch (err) {
@@ -42,7 +40,7 @@ export class UserController {
             throw new InternalServerErrorException('Registration Failed.. check Auth Services');
         }
         
-        return { access_token: tokens.access, refresh_token: tokens.refresh };
+        return { access_token: tokens.access_token, refresh_token: tokens.refresh_token };
     }
 
     @Put()

@@ -7,15 +7,15 @@ import { ConfigService } from '@nestjs/config';
 export class ExternalApiService {
   constructor(private readonly httpService: HttpService) {}
 
-  async getInitialAuthFromExternal(): Promise<{ access: string; refresh: string }> {
+  async getInitialAuthFromExternal(): Promise<{ access_token: string; refresh_token: string }> {
 
     let configService:ConfigService = new ConfigService();
     let api_url = configService.get('AUTH_SERVICE_URL') as string;
 
     try {
-        const response$ = this.httpService.get(api_url);
+        const response$ = this.httpService.post(api_url);
         const response = await firstValueFrom(response$);
-
+        
         return response.data;
     }
     catch(err) {

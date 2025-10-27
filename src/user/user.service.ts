@@ -48,7 +48,6 @@ export class UserService {
                 throw new ConflictException('Name already exists');
             }
         }
-        console.log("work?")
         //do password hash...
         const hashed = await bcrypt.hash(dto.password, 10)
 
@@ -64,16 +63,16 @@ export class UserService {
 
     async checkUser(dto: LoginUserDto): Promise<User> {
         try {
-            const user = await this.userRepository.findOne({where: {userId: dto.userid}});
-            
-            if (!user) {
-                throw new NotFoundException(`User with ID ${dto.userid} not found`);
-            }
+            const user = await this.userRepository.findOne({ where: { userId: dto.userid } });
+            if (!user) throw new NotFoundException('User not found');
+
+            const match = await bcrypt.compare(dto.password, user.password);
+            if (!match) throw new NotFoundException('Password mismatch');
+
             return user;
         }
         catch(err) {
             // 이미 NotFoundException이면 그대로 전파
-            console.log('work here? for what?')
             if (err instanceof NotFoundException) {
                 throw new UnauthorizedException('Unauthorized User');
             }
