@@ -50,12 +50,6 @@ export class UserController {
             refresh_token : tokens.refresh_token,
         };
 
-        console.log(combined.id)
-        console.log(combined.userId)
-        console.log(combined.role)
-        console.log(combined.access_token)
-        console.log(combined.refresh_token)
-
         return plainToInstance(LoginResponseDto, combined, {excludeExtraneousValues: true});
     }
 
