@@ -13,7 +13,7 @@ export class UserService {
         private userRepository:Repository<User>
     ){}
 
-    async getUsers(primaryId: number): Promise<User> {
+    async getUsers(primaryId: bigint): Promise<User> {
         try {
             const user = await this.userRepository.findOne({where: {id: primaryId}});
             if (!user) {
@@ -55,7 +55,7 @@ export class UserService {
             userId: dto.userid,
             email: dto.email,
             password: hashed,
-            role: await this.convertRoleStringToInt(dto.role)
+            role: dto.role
         });
 
         return this.userRepository.save(user);
@@ -81,22 +81,7 @@ export class UserService {
         }
     }
 
-    async convertRoleStringToInt(role:string): Promise<number> {
-
-        //magic number 바꿔 제발
-        switch(role) {
-            case 'admin':
-                return 1;
-            case 'operator':
-                return 2;
-            case 'monitor':
-                return 3;
-            default:
-                return -1;
-        }
-    }
-
-    async delete(primaryId: number): Promise<boolean> {
+    async delete(primaryId: bigint): Promise<boolean> {
 
         try {
             const user = await this.userRepository.delete({

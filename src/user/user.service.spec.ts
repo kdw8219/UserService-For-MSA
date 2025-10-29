@@ -53,7 +53,7 @@ describe('UserService', () => {
 
       mockRepository.findOne.mockResolvedValue(mockUser);
 
-      const result = await service.getUsers(1);
+      const result = await service.getUsers(1n);
       expect(result).toEqual(mockUser);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -63,7 +63,7 @@ describe('UserService', () => {
     it('should throw NotFoundException when user is not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getUsers(1)).rejects.toThrow(NotFoundException);
+      await expect(service.getUsers(1n)).rejects.toThrow(NotFoundException);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 1 },
       });
@@ -134,28 +134,6 @@ describe('UserService', () => {
       await expect(service.create(createUserDto)).rejects.toThrow(
         new BadRequestException('Name already exists'),
       );
-    });
-  });
-
-  describe('convertRoleStringToInt', () => {
-    it('should convert admin role correctly', async () => {
-      const result = await service.convertRoleStringToInt('admin');
-      expect(result).toBe(1);
-    });
-
-    it('should convert operator role correctly', async () => {
-      const result = await service.convertRoleStringToInt('operator');
-      expect(result).toBe(2);
-    });
-
-    it('should convert monitor role correctly', async () => {
-      const result = await service.convertRoleStringToInt('monitor');
-      expect(result).toBe(3);
-    });
-
-    it('should return -1 for invalid role', async () => {
-      const result = await service.convertRoleStringToInt('invalid-role');
-      expect(result).toBe(-1);
     });
   });
 });

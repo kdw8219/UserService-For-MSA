@@ -5,6 +5,8 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { LoginUserDto } from "./dto/login-user.dto";
 import { User } from "./entities/user.entity";
 import { ExternalApiService } from "./external_comm.service";
+import { LoginResponseDto } from "./dto/login-user-response.dto";
+import { plainToInstance } from "class-transformer";
 
 @Controller('api/users')
 export class UserController {
@@ -12,7 +14,7 @@ export class UserController {
 
     @Get(':id')
     async getUsers(@Param('id') id: string): Promise<User> {
-        const user = await this.userService.getUsers(+id);
+        const user = await this.userService.getUsers(BigInt(id));
         const { password, ...safe } = user as any;
         return safe;
     }
@@ -25,7 +27,7 @@ export class UserController {
         return safe;
     }
     @Post('login')
-    async getUser(@Body() userDto:LoginUserDto) {
+    async getUser(@Body() userDto:LoginUserDto): Promise<LoginResponseDto> {
         let createdUser;
         let tokens : {access_token: string, refresh_token:string };
         try {
@@ -39,8 +41,22 @@ export class UserController {
 
             throw new InternalServerErrorException('Registration Failed.. check Auth Services');
         }
-        
-        return { access_token: tokens.access_token, refresh_token: tokens.refresh_token };
+
+        const combined = {
+            id: createdUser.id,
+            userId: createdUser.userId,
+            role : createdUser.role,
+            access_token : tokens.access_token,
+            refresh_token : tokens.refresh_token,
+        };
+
+        console.log(combined.id)
+        console.log(combined.userId)
+        console.log(combined.role)
+        console.log(combined.access_token)
+        console.log(combined.refresh_token)
+
+        return plainToInstance(LoginResponseDto, combined, {excludeExtraneousValues: true});
     }
 
     @Put()
@@ -50,7 +66,7 @@ export class UserController {
 
     @Delete(':id')
     async deleteUser(@Param('id') id: string, @Req() req: Request, isInternalReq: boolean = false, refreshToken: string = "") {
-        let res = await this.userService.delete(+id);
+        let res = await this.userService.delete(BigInt(id));
         
         if(!res) {
             throw new InternalServerErrorException('Failed to delete user');
