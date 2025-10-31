@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  user-service:
+    build: .
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    container_name: user_service
+    ports:
+      - "3000:1234"
+    environment:
+      - AUTH_SERVICE_HOST=host.docker.internal
+      - AUTH_SERVICE_PORT=8080
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5433
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+
