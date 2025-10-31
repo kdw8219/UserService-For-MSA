@@ -28,6 +28,7 @@ export class UserController {
     }
     @Post('login')
     async getUser(@Body() userDto:LoginUserDto): Promise<LoginResponseDto> {
+        console.log ('get POST login request')
         let createdUser;
         let tokens : {access_token: string, refresh_token:string };
         try {
