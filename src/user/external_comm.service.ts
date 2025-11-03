@@ -2,10 +2,11 @@ import { HttpModule, HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
+import { CommonUtil } from './common.util'
 
 @Injectable()
 export class ExternalApiService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService, private commonUtil:CommonUtil) {}
 
   async getInitialAuthFromExternal(): Promise<{ access_token: string; refresh_token: string }> {
 
@@ -14,7 +15,7 @@ export class ExternalApiService {
 
     try {
         const response$ = this.httpService.post(api_url);
-        const response = await firstValueFrom(response$);
+        const response = await this.commonUtil.withTimeout(firstValueFrom(response$), 1000);
         
         return response.data;
     }
