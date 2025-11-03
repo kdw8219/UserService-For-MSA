@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Patch, Post, Put, Param, Body, Req, InternalServerErrorException } from "@nestjs/common";
+import { Controller, Delete, Get, Patch, Post, Put, Param, Body, Req, InternalServerErrorException, Inject } from "@nestjs/common";
 import { UpdateDateColumn } from "typeorm";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -7,10 +7,16 @@ import { User } from "./entities/user.entity";
 import { ExternalApiService } from "./external_comm.service";
 import { LoginResponseDto } from "./dto/login-user-response.dto";
 import { plainToInstance } from "class-transformer";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { Logger } from 'winston';
 
 @Controller('api/users')
 export class UserController {
-    constructor(private readonly userService: UserService, private readonly externalComService:ExternalApiService) {}
+    constructor(
+        private readonly userService: UserService, 
+        private readonly externalComService:ExternalApiService,
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    ) {}
 
     @Get(':id')
     async getUsers(@Param('id') id: string): Promise<User> {
@@ -28,19 +34,23 @@ export class UserController {
     }
     @Post('login')
     async getUser(@Body() userDto:LoginUserDto): Promise<LoginResponseDto> {
-        console.log ('get POST login request')
-        let createdUser;
+        this.logger.info(`get post login request! userId is ${userDto.userid}`);
+        let createdUser: User| null = null;
         let tokens : {access_token: string, refresh_token:string };
         try {
             createdUser = await this.userService.checkUser(userDto);
+            this.logger.info(`get user Information from PQ`);
             tokens = await this.externalComService.getInitialAuthFromExternal();
+            this.logger.info(`get user Auth Info from AUTH REST API `);
         }
         catch (err) {
             if(createdUser) {
+                this.logger.info(`Error... authentication error`);
                 throw new InternalServerErrorException('Get authentication error. check auth service');
             }
 
-            throw new InternalServerErrorException('Registration Failed.. check Auth Services');
+            this.logger.info(`Registration Failed... check PQ`);
+            throw new InternalServerErrorException('Registration Failed.. check PQ Services');
         }
 
         const combined = {
