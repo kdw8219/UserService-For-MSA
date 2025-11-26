@@ -13,10 +13,10 @@ import { Logger } from 'winston';
 @Controller('api/users')
 export class UserController {
     constructor(
-        private readonly userService: UserService, 
-        private readonly externalComService:ExternalApiService,
+        private readonly userService: UserService,
+        private readonly externalComService: ExternalApiService,
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    ) {}
+    ) { }
 
     @Get(':id')
     async getUsers(@Param('id') id: string): Promise<User> {
@@ -26,17 +26,17 @@ export class UserController {
     }
 
     @Post('signup')
-    async createUser(@Body() userDto:CreateUserDto): Promise<User> {
+    async createUser(@Body() userDto: CreateUserDto): Promise<User> {
         const user = await this.userService.create(userDto);
-        const {password, ...safe} = user as any;
-        
+        const { password, ...safe } = user as any;
+
         return safe;
     }
     @Post('login')
-    async getUser(@Body() userDto:LoginUserDto): Promise<LoginResponseDto> {
+    async getUser(@Body() userDto: LoginUserDto): Promise<LoginResponseDto> {
         this.logger.info(`get post login request! userId is ${userDto.userid}`);
-        let createdUser: User| null = null;
-        let tokens : {access_token: string, refresh_token:string };
+        let createdUser: User | null = null;
+        let tokens: { access_token: string, refresh_token: string };
         try {
             createdUser = await this.userService.checkUser(userDto);
             this.logger.info(`get user Information from PQ`);
@@ -44,7 +44,7 @@ export class UserController {
             this.logger.info(`get user Auth Info from AUTH REST API `);
         }
         catch (err) {
-            if(createdUser) {
+            if (createdUser) {
                 this.logger.info(`Error... authentication error`);
                 throw new InternalServerErrorException('Get authentication error. check auth service');
             }
@@ -56,12 +56,12 @@ export class UserController {
         const combined = {
             id: createdUser.id,
             userId: createdUser.userId,
-            role : createdUser.role,
-            access_token : tokens.access_token,
-            refresh_token : tokens.refresh_token,
+            role: createdUser.role,
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
         };
 
-        return plainToInstance(LoginResponseDto, combined, {excludeExtraneousValues: true});
+        return plainToInstance(LoginResponseDto, combined, { excludeExtraneousValues: true });
     }
 
     @Put()
@@ -72,17 +72,17 @@ export class UserController {
     @Delete(':id')
     async deleteUser(@Param('id') id: string, @Req() req: Request, isInternalReq: boolean = false, refreshToken: string = "") {
         let res = await this.userService.delete(BigInt(id));
-        
-        if(!res) {
+
+        if (!res) {
             throw new InternalServerErrorException('Failed to delete user');
         }
 
         //auth 삭제 필요, refresh_token을 블랙리스트로
-        if(isInternalReq == true) {
-            let refresh:string = req.headers['cookie']
-            ?.split('; ')
-            .find(row => row.startwithn('refresh_token='))
-            ?.split('=')[1];
+        if (isInternalReq == true) {
+            let refresh: string = req.headers['cookie']
+                ?.split('; ')
+                .find(row => row.startwithn('refresh_token='))
+                ?.split('=')[1];
 
             await this.externalComService.refreshTokenToBlacklist(refresh);
         }

@@ -11,30 +11,30 @@ import { CommonUtil } from "./common.util";
 
 @Injectable()
 export class UserService {
-    constructor (
+    constructor(
         @InjectRepository(User)
-        private userRepository:Repository<User>,
-        private commonUtil:CommonUtil
-    ){}
+        private userRepository: Repository<User>,
+        private commonUtil: CommonUtil
+    ) { }
 
-    
+
 
     async getUsers(primaryId: bigint): Promise<User> {
         try {
 
-            const user = await this.commonUtil.withTimeout(this.userRepository.findOne({where: {id: primaryId}}), 5000);
+            const user = await this.commonUtil.withTimeout(this.userRepository.findOne({ where: { id: primaryId } }), 5000);
             if (!user) {
                 throw new NotFoundException(`User with ID ${primaryId} not found`);
             }
             return user;
         }
-        catch(err) {
+        catch (err) {
             // 이미 NotFoundException이면 그대로 전파
             if (err instanceof NotFoundException) {
                 throw err;
             }
-            else if ( err instanceof TimeoutError) {
-                throw new RequestTimeoutException(`get user command timeout...`)    
+            else if (err instanceof TimeoutError) {
+                throw new RequestTimeoutException(`get user command timeout...`)
             }
             // DB 에러 등 다른 에러는 InternalServerErrorException으로 변환
             throw new InternalServerErrorException('Failed to fetch user');
@@ -42,15 +42,15 @@ export class UserService {
     }
 
     async create(dto: CreateUserDto): Promise<User> {
-        
-        try{
-            const existing = await this.commonUtil.withTimeout( this.userRepository.findOne({
-                where:[
+
+        try {
+            const existing = await this.commonUtil.withTimeout(this.userRepository.findOne({
+                where: [
                     { email: dto.email },
                     { userId: dto.userid }
                 ],
             }), 1000);
-            
+
             if (existing) {
                 if (existing.email === dto.email) {
                     throw new ConflictException('Email already exists');
@@ -60,7 +60,7 @@ export class UserService {
                 }
             }
         }
-        catch(err) {
+        catch (err) {
 
         }
         //do password hash...
@@ -86,13 +86,13 @@ export class UserService {
 
             return user;
         }
-        catch(err) {
+        catch (err) {
             // 이미 NotFoundException이면 그대로 전파
             if (err instanceof NotFoundException) {
                 throw new UnauthorizedException('Unauthorized User');
             }
-            else if ( err instanceof TimeoutError) {
-                throw new RequestTimeoutException(`get user command timeout...`)    
+            else if (err instanceof TimeoutError) {
+                throw new RequestTimeoutException(`get user command timeout...`)
             }
             // DB 에러 등 다른 에러는 InternalServerErrorException으로 변환
             throw new InternalServerErrorException('Failed to fetch user');
@@ -106,13 +106,13 @@ export class UserService {
                 {
                     id: primaryId
                 }
-            ),1000);
-        } catch(err) {
-            if( err instanceof NotFoundException) {
+            ), 1000);
+        } catch (err) {
+            if (err instanceof NotFoundException) {
                 return true; // 없어서 못지우는 경우는 패스
             }
-            else if ( err instanceof TimeoutError) {
-                throw new RequestTimeoutException(`delete user command timeout...`)    
+            else if (err instanceof TimeoutError) {
+                throw new RequestTimeoutException(`delete user command timeout...`)
             }
             else {
                 return false;

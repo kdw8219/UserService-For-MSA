@@ -1,24 +1,26 @@
-# 베이스 이미지
-FROM node:18-alpine
+FROM node:18-alpine as builder
 
-# 작업 디렉토리 설정
 WORKDIR /app
 
-# package.json과 package-lock.json 복사
 COPY package*.json ./
 
-# 의존성 설치
-RUN npm install --production
+RUN npm ci
 
-# 소스 복사
 COPY . .
 
-# Nest.js 빌드 (tsc)
 RUN npm run build
 
-# 컨테이너 포트 명시
+RUN npm prune --production
+
+# Runtime stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+
 EXPOSE 3000
 
-# 실행 명령어
-CMD ["npm", "start"]
-
+CMD ["npm", "run", "start:prod"]
