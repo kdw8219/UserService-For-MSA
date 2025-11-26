@@ -17,17 +17,17 @@ import * as crypto from 'crypto';
     }),
 
     TypeOrmModule.forRootAsync({
-      useFactory: (configService) => ({
+      useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST') as string,
-        port: 5433,
-        username: configService.get('DB_USER') as string,
-        password: configService.get('DB_PASSWORD') as string,
-        database: configService.get('DB_NAME') as string,
+        host: configService.get<string>('DB_HOST'),
+        port: parseInt(configService.get<string>('DB_PORT') || '5432'),
+        username: configService.get<string>('DB_USER'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
         synchronize: true,
       }),
-      inject: [/* ConfigService */ ConfigService],
+      inject: [ConfigService],
     }),
 
     WinstonModule.forRoot({
@@ -56,4 +56,4 @@ import * as crypto from 'crypto';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
